@@ -173,3 +173,40 @@ kubectl get pods --all-namespaces
 kubectl describe pod <pod-name> -n <namespace>
 kubectl logs <pod-name> -n <namespace>
 ```
+
+## Docker ComposeアプリケーションからJaegerへのトレース送信
+
+Kindクラスタ上のJaegerにDocker Composeで実行しているアプリケーションからトレースデータを送信するための設定例です。
+
+### Docker Composeの設定
+
+`docker-compose.yml`ファイルに以下のような設定を追加します：
+
+```yaml
+version: '3'
+services:
+  your-app:
+    # アプリケーションの設定
+    environment:
+      # OpenTelemetry Collector へのエクスポート設定
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-otlp.127.0.0.1.nip.io"
+      OTEL_SERVICE_NAME: "your-service-name"
+    # ホスト名解決のための設定
+    extra_hosts:
+      - "jaeger-otlp.127.0.0.1.nip.io:host-gateway"
+```
+
+アプリケーションは、OpenTelemetry SDKを使用してトレースデータをJaegerに送信します。環境変数`OTEL_EXPORTER_OTLP_ENDPOINT`で正しいホスト名を設定し、`extra_hosts`で同じホスト名がホストマシンのIPにマッピングされるようにすることが重要です。
+
+OTLPプロトコルを使用してトレースデータを送信する場合は、Kindクラスタで設定した`jaeger-otlp.127.0.0.1.nip.io`エンドポイントを直接利用します。
+
+### 動作確認
+
+トレースデータが正しく送信されているかは、Jaeger UIで確認できます：
+
+```bash
+# ブラウザで以下のURLにアクセス
+# http://jaeger-ui.127.0.0.1.nip.io/
+```
+
+サービス名ドロップダウンから、設定した`OTEL_SERVICE_NAME`の値を選択して、トレースデータを確認します。

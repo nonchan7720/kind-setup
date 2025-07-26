@@ -173,3 +173,40 @@ kubectl get pods --all-namespaces
 kubectl describe pod <pod-name> -n <namespace>
 kubectl logs <pod-name> -n <namespace>
 ```
+
+## Sending Traces from Docker Compose Applications to Jaeger
+
+Here's a configuration example for sending trace data from applications running in Docker Compose to Jaeger deployed on your Kind cluster.
+
+### Docker Compose Configuration
+
+Add the following settings to your `docker-compose.yml` file:
+
+```yaml
+version: '3'
+services:
+  your-app:
+    # Your application configuration
+    environment:
+      # OpenTelemetry Collector export settings
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-otlp.127.0.0.1.nip.io"
+      OTEL_SERVICE_NAME: "your-service-name"
+    # Host resolution configuration
+    extra_hosts:
+      - "jaeger-otlp.127.0.0.1.nip.io:host-gateway"
+```
+
+Your application should use the OpenTelemetry SDK to send trace data to Jaeger. It's important to set the correct hostname in the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable and ensure the same hostname is mapped to the host machine's IP in the `extra_hosts` setting.
+
+To send trace data using the OTLP protocol, use the `jaeger-otlp.127.0.0.1.nip.io` endpoint that was configured in your Kind cluster directly.
+
+### Verification
+
+You can verify that trace data is being sent correctly by checking the Jaeger UI:
+
+```bash
+# Access the following URL in your browser
+# http://jaeger-ui.127.0.0.1.nip.io/
+```
+
+Select your service name (the value set in `OTEL_SERVICE_NAME`) from the service dropdown to view your trace data.
