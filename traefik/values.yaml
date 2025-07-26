@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/traefik/traefik-helm-chart/refs/tags/v35.2.0/traefik/values.schema.json
+image:
+  registry: public.ecr.aws
+  repository: docker/library/traefik
+logs:
+  general:
+    format: json
+    level: DEBUG
+  access:
+    format: json
+    level: DEBUG
+    bufferingSize: 100
+podDisruptionBudget:
+  enabled: false
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+providers:
+  kubernetesCRD:
+    enabled: false
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: false
+  kubernetesGateway:
+    enabled: false
+  file:
+    enabled: false
+gateway:
+  enabled: false
+service:
+  type: NodePort
+
+ports:
+  traefik:
+    expose:
+      default: true
+  web:
+    nodePort: 30080
+  websecure:
+    nodePort: 30443
+  metrics: null
+rbac:
+  enabled: true
+metrics:
+  prometheus: null
+  otlp:
+    enabled: false
+nodeSelector:
+  kubernetes.io/os: linux
+  kubernetes.io/hostname: local-cluster-control-plane
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+    operator: Equal
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Equal
+additionalArguments:
+- "--global.checknewversion"
+- "--global.sendanonymoususage"
+- "--api.insecure=true"

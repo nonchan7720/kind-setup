@@ -1,0 +1,31 @@
+provisionDataStore:
+  cassandra: false
+
+storage:
+  type: badger
+
+allInOne:
+  enabled: true
+  ingress:
+    enabled: true
+    hosts:
+      - jaeger-ui.127.0.0.1.nip.io
+  nodeSelector:
+    kubernetes.io/os: linux
+    kubernetes.io/hostname: local-cluster-control-plane
+  tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/master
+      operator: Equal
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+      operator: Equal
+    
+agent:
+  enabled: false
+
+collector:
+  enabled: false
+
+query:
+  enabled: false

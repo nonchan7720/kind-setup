@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jaeger
+
+helmCharts:
+  - name: jaeger
+    repo: https://jaegertracing.github.io/helm-charts
+    releaseName: jaeger
+    valuesFile: values.yaml
+    version: v3.4.1
+
+resources:
+  - namespace.yaml
+  - ingress.yaml
