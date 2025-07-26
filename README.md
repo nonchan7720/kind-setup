@@ -2,6 +2,8 @@
 
 このリポジトリには、Kind（Kubernetes IN Docker）を使用したローカルKubernetesクラスタのセットアップと、特定のサービス（Dashboard、Traefik、Jaeger）のデプロイメント設定が含まれています。
 
+[English version here](docs/README-en.md)
+
 ## 目次
 
 - [Kind Kubernetes クラスタセットアップガイド](#kind-kubernetes-クラスタセットアップガイド)
