@@ -146,10 +146,10 @@ server:
           sql:
             pluginName: mysql8
             databaseName: temporal
-            connectAddr: temporal-db-cluster.temporal-db.svc.cluster.local:3306
+            connectAddr: temporal-db-cluster.temporal-db:3306
             connectProtocol: tcp
-            user: temporal
-            password: temporal
+            user: root
+            password: password
             maxConns: 20
             maxIdleConns: 20
             maxConnLifetime: "1h"
@@ -157,10 +157,10 @@ server:
           sql:
             pluginName: mysql8
             databaseName: temporal_visibility
-            connectAddr: temporal-db-cluster.temporal-db.svc.cluster.local:3306
+            connectAddr: temporal-db-cluster.temporal-db:3306
             connectProtocol: tcp
-            user: temporal
-            password: temporal
+            user: root
+            password: password
             maxConns: 20
             maxIdleConns: 20
             maxConnLifetime: "1h"
@@ -173,7 +173,8 @@ server:
   frontend:
     service:
       # Evaluated as template
-      annotations: {}
+      annotations:
+        traefik.ingress.kubernetes.io/service.serversscheme: h2c
       type: ClusterIP
       port: 7233
       appProtocol: tcp
@@ -188,7 +189,8 @@ server:
     ingress:
       enabled: true
       # className:
-      annotations: {}
+      annotations:
+        traefik.ingress.kubernetes.io/service.serversscheme: h2c
       # kubernetes.io/ingress.class: traefik
       # ingress.kubernetes.io/ssl-redirect: "false"
       # traefik.frontend.rule.type: PathPrefix
@@ -196,7 +198,9 @@ server:
         - temporal.127.0.0.1.nip.io
         # - "domain.com/xyz"
         # - "domain.com"
-      tls: []
+      tls:
+        - hosts:
+            - temporal.127.0.0.1.nip.io
       #  - secretName: chart-example-tls
       #    hosts:
       #      - chart-example.local
@@ -259,7 +263,7 @@ server:
     podDisruptionBudget: {}
   history:
     service:
-      # type: ClusterIP
+      type: ClusterIP
       port: 7234
       appProtocol: tcp
       membershipPort: 6934
@@ -288,7 +292,7 @@ server:
     podDisruptionBudget: {}
   matching:
     service:
-      # type: ClusterIP
+      type: ClusterIP
       port: 7235
       appProtocol: tcp
       membershipPort: 6935
