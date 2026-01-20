@@ -166,7 +166,7 @@ server:
             maxConnLifetime: "1h"
     namespaces:
       # Enable this to create namespaces
-      create: false
+      create: true
       namespace:
         - name: default
           retention: 3d

@@ -1493,6 +1493,14 @@ spec:
             - name: shims
               mountPath: /usr/local/sbin/temporal-elasticsearch-tool
               subPath: temporal-elasticsearch-tool
+        - name: create-default-namespace
+          image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
+          imagePullPolicy: IfNotPresent
+          command: ['/bin/sh','-c']
+          args: ['temporal operator namespace describe -n default || temporal operator namespace create -n default --retention 3d']
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: "temporal-frontend.temporal.svc:7233"
       containers:
         - name: done
           image: "temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0"
