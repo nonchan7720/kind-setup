@@ -1,0 +1,14 @@
+environments:
+  local: {}
+---
+repositories:
+  - name: traefik
+    url: https://traefik.github.io/charts
+
+releases:
+  - name: traefik
+    chart: traefik/traefik
+    version: "35.2.0"
+    values:
+      - values.yaml
+    namespace: ingress-traefik

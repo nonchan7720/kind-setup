@@ -13,7 +13,7 @@ metadata:
     app.kubernetes.io/part-of: temporal
 type: Opaque
 data:
-  password: "dGVtcG9yYWw="
+  password: "cGFzc3dvcmQ="
 ---
 # Source: temporal/templates/server-secret.yaml
 apiVersion: v1
@@ -29,7 +29,7 @@ metadata:
     app.kubernetes.io/part-of: temporal
 type: Opaque
 data:
-  password: "dGVtcG9yYWw="
+  password: "cGFzc3dvcmQ="
 ---
 # Source: temporal/templates/server-configmap.yaml
 apiVersion: v1
@@ -54,7 +54,7 @@ data:
       datastores:
         default:
           sql:
-            connectAddr: temporal-db-cluster.temporal-db.svc.cluster.local:3306
+            connectAddr: temporal-db-cluster.temporal-db:3306
             connectProtocol: tcp
             databaseName: temporal
             maxConnLifetime: 1h
@@ -62,10 +62,10 @@ data:
             maxIdleConns: 20
             password: {{ env "TEMPORAL_DEFAULT_STORE_PASSWORD" | quote }}
             pluginName: mysql8
-            user: temporal
+            user: root
         visibility:
           sql:
-            connectAddr: temporal-db-cluster.temporal-db.svc.cluster.local:3306
+            connectAddr: temporal-db-cluster.temporal-db:3306
             connectProtocol: tcp
             databaseName: temporal_visibility
             maxConnLifetime: 1h
@@ -73,7 +73,7 @@ data:
             maxIdleConns: 20
             password: {{ env "TEMPORAL_VISIBILITY_STORE_PASSWORD" | quote }}
             pluginName: mysql8
-            user: temporal
+            user: root
       defaultStore: default
       numHistoryShards: 512
       visibilityStore: visibility
@@ -494,6 +494,8 @@ metadata:
     app.kubernetes.io/instance: temporal
     app.kubernetes.io/version: "1.29.2"
     app.kubernetes.io/part-of: temporal
+  annotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: h2c
 spec:
   type: ClusterIP
   ports:
@@ -884,7 +886,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: d92c01c2f35ff7074fe0005f1d8a85256da351182fbec9b6da8f6b980853bf5f
+        checksum/config: 261c5744789b1ff3b94a951efa3c07ec598242140895146cf8134864aa8a9f2d
         prometheus.io/job: temporal-frontend
         prometheus.io/scrape: 'true'
         prometheus.io/scheme: http
@@ -1004,7 +1006,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: d92c01c2f35ff7074fe0005f1d8a85256da351182fbec9b6da8f6b980853bf5f
+        checksum/config: 261c5744789b1ff3b94a951efa3c07ec598242140895146cf8134864aa8a9f2d
         prometheus.io/job: temporal-history
         prometheus.io/scrape: 'true'
         prometheus.io/scheme: http
@@ -1117,7 +1119,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: d92c01c2f35ff7074fe0005f1d8a85256da351182fbec9b6da8f6b980853bf5f
+        checksum/config: 261c5744789b1ff3b94a951efa3c07ec598242140895146cf8134864aa8a9f2d
         prometheus.io/job: temporal-matching
         prometheus.io/scrape: 'true'
         prometheus.io/scheme: http
@@ -1230,7 +1232,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: d92c01c2f35ff7074fe0005f1d8a85256da351182fbec9b6da8f6b980853bf5f
+        checksum/config: 261c5744789b1ff3b94a951efa3c07ec598242140895146cf8134864aa8a9f2d
         prometheus.io/job: temporal-worker
         prometheus.io/scrape: 'true'
         prometheus.io/scheme: http
@@ -1409,13 +1411,13 @@ spec:
             - name: SQL_PLUGIN
               value: mysql8
             - name: SQL_HOST
-              value: temporal-db-cluster.temporal-db.svc.cluster.local
+              value: temporal-db-cluster.temporal-db
             - name: SQL_PORT
               value: "3306"
             - name: SQL_DATABASE
               value: temporal
             - name: SQL_USER
-              value: "temporal"
+              value: "root"
             - name: SQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -1431,13 +1433,13 @@ spec:
             - name: SQL_PLUGIN
               value: mysql8
             - name: SQL_HOST
-              value: temporal-db-cluster.temporal-db.svc.cluster.local
+              value: temporal-db-cluster.temporal-db
             - name: SQL_PORT
               value: "3306"
             - name: SQL_DATABASE
               value: temporal
             - name: SQL_USER
-              value: "temporal"
+              value: "root"
             - name: SQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -1455,13 +1457,13 @@ spec:
             - name: SQL_PLUGIN
               value: mysql8
             - name: SQL_HOST
-              value: temporal-db-cluster.temporal-db.svc.cluster.local
+              value: temporal-db-cluster.temporal-db
             - name: SQL_PORT
               value: "3306"
             - name: SQL_DATABASE
               value: temporal_visibility
             - name: SQL_USER
-              value: "temporal"
+              value: "root"
             - name: SQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -1477,13 +1479,13 @@ spec:
             - name: SQL_PLUGIN
               value: mysql8
             - name: SQL_HOST
-              value: temporal-db-cluster.temporal-db.svc.cluster.local
+              value: temporal-db-cluster.temporal-db
             - name: SQL_PORT
               value: "3306"
             - name: SQL_DATABASE
               value: temporal_visibility
             - name: SQL_USER
-              value: "temporal"
+              value: "root"
             - name: SQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -1525,7 +1527,13 @@ metadata:
     app.kubernetes.io/instance: temporal
     app.kubernetes.io/version: "1.29.2"
     app.kubernetes.io/part-of: temporal
+  annotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: h2c
 spec:
+  tls:
+    - hosts:
+      - "temporal.127.0.0.1.nip.io"
+      secretName: 
   rules:
       - host: temporal.127.0.0.1.nip.io
         http:

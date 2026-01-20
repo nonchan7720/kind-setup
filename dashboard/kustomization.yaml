@@ -3,12 +3,13 @@ kind: Kustomization
 
 namespace: kubernetes-dashboard
 
-helmCharts:
-  - name: kubernetes-dashboard
-    repo: https://kubernetes.github.io/dashboard/
-    releaseName: kubernetes-dashboard
-    version: v7.13.0
+# helmCharts:
+#   - name: kubernetes-dashboard
+#     repo: https://kubernetes.github.io/dashboard/
+#     releaseName: kubernetes-dashboard
+#     version: v7.13.0
 
 resources:
   - namespace.yaml
+  - manifest.yaml
   - admin.yaml
