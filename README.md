@@ -15,8 +15,15 @@
   - [コンポーネント一覧](#コンポーネント一覧)
     - [dashboard](#dashboard)
     - [traefik](#traefik)
+    - [local storage](#local-storage)
     - [jaeger](#jaeger)
+    - [mysql-operator](#mysql-operator)
+    - [temporal-db](#temporal-db)
+    - [temporal](#temporal)
   - [トラブルシューティング](#トラブルシューティング)
+  - [Docker ComposeアプリケーションからJaegerへのトレース送信](#docker-composeアプリケーションからjaegerへのトレース送信)
+    - [Docker Composeの設定](#docker-composeの設定)
+    - [動作確認](#動作確認)
 
 ## 前提条件
 
@@ -128,6 +135,20 @@ Traefikは、モダンなクラウドネイティブなリバースプロキシ�
 
 Traefikダッシュボードは、Ingressで設定されたホスト名（`traefik-dashboard.127.0.0.1.nip.io`）を通じてアクセスできます。
 
+### local storage
+
+local storage を pvc として扱うためのデプロイメント設定が含まれています。
+
+**セットアップ方法**:
+
+```bash
+# Kustomizeを使用してHelmチャートを含むリソースを適用
+kubectl apply -k local-path-provisioner
+
+# 削除する場合
+# kubectl delete -k local-path-provisioner
+```
+
 ### jaeger
 
 分散トレーシングシステムであるJaegerのデプロイメント設定が含まれています。
@@ -163,6 +184,96 @@ Jaegerは、マイクロサービスアーキテクチャにおける分散ト�
 ```
 
 OTLPプロトコルを使用してトレースデータを送信する場合は、`jaeger-otlp.127.0.0.1.nip.io`エンドポイントを利用できます。
+
+### mysql-operator
+
+Oracle MySQL Operator for Kubernetesのデプロイメント設定が含まれています。
+
+**セットアップ方法**:
+
+```bash
+# Kustomizeを使用してリソースを適用
+kubectl apply -k mysql-operator
+
+# 削除する場合
+# kubectl delete -k mysql-operator
+```
+
+**主な構成**:
+
+- MySQL Operator CRDs（バージョン9.5.0-2.2.6）
+- MySQL Operatorデプロイメント
+- 名前空間設定 - mysql-operator名前空間
+
+MySQL Operatorは、KubernetesクラスタでMySQLの高可用性クラスタを管理するためのオペレーターです。InnoDBクラスタのプロビジョニング、スケーリング、バックアップなどの操作を自動化します。
+
+### temporal-db
+
+Temporal用のMySQLデータベースクラスタのデプロイメント設定が含まれています。
+
+**前提条件**:
+- mysql-operatorが事前にデプロイされていること
+
+**セットアップ方法**:
+
+```bash
+# Kustomizeを使用してリソースを適用
+kubectl apply -k temporal-db
+
+# 削除する場合
+# kubectl delete -k temporal-db
+```
+
+**主な構成**:
+
+- InnoDBクラスタ設定（db-cluster.yaml）- 3インスタンスのクラスタ構成、1インスタンスのルーター
+- MySQLシークレット設定（mysql.env経由）
+- 名前空間設定（namespace.yaml）- temporal-db名前空間
+
+このクラスタは、Temporalワークフローエンジンのメタデータストアとして使用されます。
+
+**データベースへの接続**:
+
+```bash
+# MySQL Shellを使用してデータベースに接続
+kubectl run -n temporal-db --rm -it myshell --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh
+
+# MySQL Shell内で接続
+MySQL  SQL > \connect root@temporal-db-cluster
+
+# パスワードを入力してログイン
+# 必要に応じてfiles/query.sqlのクエリを実行
+```
+
+### temporal
+
+ワークフローエンジンであるTemporalのデプロイメント設定が含まれています。
+
+**前提条件**:
+- temporal-dbが事前にデプロイされ、正常に動作していること
+
+**セットアップ方法**:
+
+```bash
+# マニフェストファイルの生成（オプション）
+cd temporal
+./helm.sh
+
+# Kustomizeを使用してリソースを適用
+kubectl apply -k temporal
+
+# 削除する場合
+# kubectl delete -k temporal
+```
+
+**主な構成**:
+
+- Temporal Helmチャート（temporalio/temporal）- バージョン1.29.2を使用
+- カスタム値設定（values-base.yaml, values-local.yaml）- データベース接続設定、レプリカ数等
+- マニフェスト生成スクリプト（helm.sh）- Helmfileを使用したマニフェスト生成
+- 名前空間設定（namespace.yaml）- temporal名前空間
+
+Temporalは、分散システムにおける信頼性の高いワークフローオーケストレーションを提供します。複雑な非同期処理、長時間実行タスク、エラーハンドリングなどを簡素化します。
 
 ## トラブルシューティング
 
