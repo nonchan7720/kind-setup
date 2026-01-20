@@ -5,10 +5,11 @@ image:
 logs:
   general:
     format: json
-    level: DEBUG
+    level: INFO
   access:
+    enabled: true
     format: json
-    level: DEBUG
+    level: INFO
     bufferingSize: 100
 podDisruptionBudget:
   enabled: false
@@ -57,6 +58,4 @@ tolerations:
     key: node-role.kubernetes.io/control-plane
     operator: Equal
 additionalArguments:
-- "--global.checknewversion"
-- "--global.sendanonymoususage"
-- "--api.insecure=true"
+  - "--api.insecure=true"

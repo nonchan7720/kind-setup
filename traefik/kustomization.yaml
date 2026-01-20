@@ -3,13 +3,7 @@ kind: Kustomization
 
 namespace: ingress-traefik
 
-helmCharts:
-  - name: traefik
-    repo: https://traefik.github.io/charts
-    releaseName: traefik
-    valuesFile: values.yaml
-    version: v35.2.0
-
 resources:
   - namespace.yaml
+  - manifest.yaml
   - ingress.yaml
