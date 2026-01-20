@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mysql-operator
+
+resources:
+  - https://raw.githubusercontent.com/mysql/mysql-operator/9.5.0-2.2.6/deploy/deploy-crds.yaml
+  - https://raw.githubusercontent.com/mysql/mysql-operator/9.5.0-2.2.6/deploy/deploy-operator.yaml

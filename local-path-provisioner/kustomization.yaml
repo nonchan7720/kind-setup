@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: local-path-storage
+
+resources:
+  - https://github.com/rancher/local-path-provisioner/deploy?ref=v0.0.32
+
+configMapGenerator:
+  - name: patch-local-path-config
+    files:
+      - files/config.json
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: patch-local-path-config
+      fieldPath: data.config\.json
+    targets:
+      - select:
+          kind: ConfigMap
+          name: local-path-config
+        fieldPaths:
+          - data.config\.json

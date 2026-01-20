@@ -11,6 +11,9 @@ nodes:
         hostPort: 443
         protocol: TCP
         listenAddress: 0.0.0.0
+    extraMounts:
+      - hostPath: ./tmp/kind-data
+        containerPath: /mnt/data
 kubeadmConfigPatches:
   - |
     kind: InitConfiguration
