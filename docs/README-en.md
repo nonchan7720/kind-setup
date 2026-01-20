@@ -15,8 +15,15 @@ This repository contains setup configurations for a local Kubernetes cluster usi
   - [Components](#components)
     - [Dashboard](#dashboard)
     - [Traefik](#traefik)
+    - [Local Storage](#local-storage)
     - [Jaeger](#jaeger)
+    - [MySQL Operator](#mysql-operator)
+    - [Temporal DB](#temporal-db)
+    - [Temporal](#temporal)
   - [Troubleshooting](#troubleshooting)
+  - [Sending Traces from Docker Compose Applications to Jaeger](#sending-traces-from-docker-compose-applications-to-jaeger)
+    - [Docker Compose Configuration](#docker-compose-configuration)
+    - [Verification](#verification)
 
 ## Prerequisites
 
@@ -26,6 +33,7 @@ Ensure you have the following tools installed:
 - Kind
 - kubectl
 - Helm v3
+- helmfile (required for Temporal manifest generation)
 
 ## Kind Cluster Setup
 
@@ -128,6 +136,20 @@ Traefik is a modern cloud-native reverse proxy and load balancer used for traffi
 
 The Traefik dashboard can be accessed through the Ingress hostname (`traefik-dashboard.127.0.0.1.nip.io`).
 
+### Local Storage
+
+Configuration files for deploying local storage provisioner to handle PVCs.
+
+**Setup Method**:
+
+```bash
+# Apply resources using Kustomize
+kubectl apply -k local-path-provisioner
+
+# To delete
+# kubectl delete -k local-path-provisioner
+```
+
 ### Jaeger
 
 Configuration files for deploying Jaeger, a distributed tracing system.
@@ -163,6 +185,96 @@ Jaeger enables distributed tracing in microservice architectures, helping to ana
 ```
 
 To send trace data using the OTLP protocol, use the `jaeger-otlp.127.0.0.1.nip.io` endpoint.
+
+### MySQL Operator
+
+Configuration files for deploying Oracle MySQL Operator for Kubernetes.
+
+**Setup Method**:
+
+```bash
+# Apply resources using Kustomize
+kubectl apply -k mysql-operator
+
+# To delete
+# kubectl delete -k mysql-operator
+```
+
+**Main Components**:
+
+- MySQL Operator CRDs (version 9.5.0-2.2.6)
+- MySQL Operator deployment
+- Namespace configuration - mysql-operator namespace
+
+MySQL Operator manages high-availability MySQL clusters in Kubernetes. It automates operations such as InnoDBCluster provisioning, scaling, and backups.
+
+### Temporal DB
+
+Configuration files for deploying a MySQL database cluster for Temporal.
+
+**Prerequisites**:
+- mysql-operator must be deployed beforehand
+
+**Setup Method**:
+
+```bash
+# Apply resources using Kustomize
+kubectl apply -k temporal-db
+
+# To delete
+# kubectl delete -k temporal-db
+```
+
+**Main Components**:
+
+- InnoDBCluster configuration (db-cluster.yaml) - 3-instance cluster with 1 router instance
+- MySQL secret configuration (via mysql.env)
+- Namespace configuration (namespace.yaml) - temporal-db namespace
+
+This cluster is used as the metadata store for the Temporal workflow engine.
+
+**Connecting to the Database**:
+
+```bash
+# Connect to the database using MySQL Shell
+kubectl run -n temporal-db --rm -it myshell --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh
+
+# Connect within MySQL Shell
+MySQL  SQL > \connect root@temporal-db-cluster
+
+# Enter the password to log in
+# Execute queries from files/query.sql as needed
+```
+
+### Temporal
+
+Configuration files for deploying Temporal, a workflow orchestration engine.
+
+**Prerequisites**:
+- temporal-db must be deployed and running properly
+
+**Setup Method**:
+
+```bash
+# Generate manifest files (optional)
+cd temporal
+./helm.sh
+
+# Apply resources using Kustomize
+kubectl apply -k temporal
+
+# To delete
+# kubectl delete -k temporal
+```
+
+**Main Components**:
+
+- Temporal Helm chart (temporalio/temporal) - using version 1.29.2
+- Custom values configuration (values-base.yaml, values-local.yaml) - database connection settings, replica counts, etc.
+- Manifest generation script (helm.sh) - generates manifests using Helmfile
+- Namespace configuration (namespace.yaml) - temporal namespace
+
+Temporal provides reliable workflow orchestration for distributed systems. It simplifies complex asynchronous processing, long-running tasks, and error handling.
 
 ## Troubleshooting
 

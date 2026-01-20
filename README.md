@@ -33,6 +33,7 @@
 - Kind
 - kubectl
 - Helm v3
+- helmfile
 
 ## Kindクラスタのセットアップ
 
@@ -72,10 +73,10 @@ Kubernetes Dashboardをデプロイするための設定ファイルが含まれ
 
 ```bash
 # Kustomizeを使用してHelmチャートを含むリソースを適用
-kubectl kustomize --enable-helm dashboard/ | kubectl apply -f -
+kubectl apply -k dashboard
 
 # 削除する場合
-# kubectl kustomize --enable-helm dashboard/ | kubectl delete -f -
+# kubectl delete dashboard
 ```
 
 **主な構成**:
@@ -110,10 +111,10 @@ Traefikのデプロイメント設定が含まれています。
 
 ```bash
 # Kustomizeを使用してHelmチャートを含むリソースを適用
-kubectl kustomize --enable-helm traefik/ | kubectl apply -f -
+kubectl apply -k traefik
 
 # 削除する場合
-# kubectl kustomize --enable-helm traefik/ | kubectl delete -f -
+# kubectl delete -k traefik
 ```
 
 **主な構成**:
