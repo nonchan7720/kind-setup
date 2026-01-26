@@ -16,6 +16,7 @@ This repository contains setup configurations for a local Kubernetes cluster usi
     - [Dashboard](#dashboard)
     - [Traefik](#traefik)
     - [Local Storage](#local-storage)
+    - [LocalStack](#localstack)
     - [Jaeger](#jaeger)
     - [MySQL Operator](#mysql-operator)
     - [Temporal DB](#temporal-db)
@@ -148,6 +149,41 @@ kubectl apply -k local-path-provisioner
 
 # To delete
 # kubectl delete -k local-path-provisioner
+```
+
+### LocalStack
+
+Configuration files for deploying LocalStack, a local emulator for AWS services.
+
+**Setup Method**:
+
+```bash
+# Apply resources using Kustomize
+kubectl apply -k localstack
+
+# To delete
+# kubectl delete -k localstack
+```
+
+**Main Components**:
+
+- LocalStack StatefulSet configuration (statefulset.yaml) - LocalStack image (version 4.12.0), persistent volume settings
+- Service configuration (service.yaml) - access via port 4566
+- Ingress configuration (ingress.yaml) - access via localhost.localstack.cloud hostname
+- PVC configuration (pvc.yaml) - storage for data persistence
+- Namespace configuration (namespace.yaml) - localstack namespace
+
+LocalStack emulates AWS services such as S3, DynamoDB, Lambda, and SQS in a local environment for development and testing purposes.
+
+**Access Method**:
+
+```bash
+# Access LocalStack through Ingress
+# Access the following endpoint in your browser or AWS CLI
+# http://localhost.localstack.cloud/
+
+# AWS CLI usage example
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
 ```
 
 ### Jaeger

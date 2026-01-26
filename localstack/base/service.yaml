@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: localstack
+spec:
+  ports:
+    - name: localstack
+      port: 4566
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: localstack

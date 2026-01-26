@@ -16,6 +16,8 @@
     - [dashboard](#dashboard)
     - [traefik](#traefik)
     - [local storage](#local-storage)
+    - [localstack](#localstack)
+    - [localstack](#localstack-1)
     - [jaeger](#jaeger)
     - [mysql-operator](#mysql-operator)
     - [temporal-db](#temporal-db)
@@ -148,6 +150,74 @@ kubectl apply -k local-path-provisioner
 
 # 削除する場合
 # kubectl delete -k local-path-provisioner
+```
+### localstack
+
+AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
+
+**セットアップ方法**:
+
+```bash
+# Kustomizeを使用してリソースを適用
+kubectl apply -k localstack
+
+# 削除する場合
+# kubectl delete -k localstack
+```
+
+**主な構成**:
+
+- LocalStack StatefulSet設定（statefulset.yaml）- LocalStackイメージ（バージョン4.12.0）、永続ボリューム設定
+- サービス設定（service.yaml）- ポート4566でのアクセス
+- Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
+- PVC設定（pvc.yaml）- データ永続化用ストレージ
+- 名前空間設定（namespace.yaml）- localstack名前空間
+
+LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+
+**アクセス方法**:
+
+```bash
+# Ingressを通じてLocalStackにアクセス
+# ブラウザまたはAWS CLIで以下のエンドポイントにアクセス
+# http://localhost.localstack.cloud/
+
+# AWS CLIの使用例
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
+```
+### localstack
+
+AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
+
+**セットアップ方法**:
+
+```bash
+# Kustomizeを使用してリソースを適用
+kubectl apply -k localstack
+
+# 削除する場合
+# kubectl delete -k localstack
+```
+
+**主な構成**:
+
+- LocalStack StatefulSet設定（statefulset.yaml）- LocalStackイメージ（バージョン4.12.0）、永続ボリューム設定
+- サービス設定（service.yaml）- ポート4566でのアクセス
+- Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
+- PVC設定（pvc.yaml）- データ永続化用ストレージ
+- 名前空間設定（namespace.yaml）- localstack名前空間
+
+LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+
+**アクセス方法**:
+
+```bash
+# Ingressを通じてLocalStackにアクセス
+# ブラウザまたはAWS CLIで以下のエンドポイントにアクセス
+# http://localhost.localstack.cloud/
+
+# AWS CLIの使用例
+AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
 ```
 
 ### jaeger

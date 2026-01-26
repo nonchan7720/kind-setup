@@ -1,0 +1,8 @@
+namePrefix:
+  - path: metadata/name
+  - kind: StatefulSet
+    path: spec/selector/matchLabels/app.kubernetes.io\/name
+  - kind: StatefulSet
+    path: spec/template/metadata/labels/app.kubernetes.io\/name
+  - kind: Service
+    path: spec/selector/app.kubernetes.io\/name
