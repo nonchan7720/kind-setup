@@ -12,12 +12,13 @@
   - [Kindクラスタのセットアップ](#kindクラスタのセットアップ)
     - [1. クラスタの作成](#1-クラスタの作成)
     - [2. クラスタの確認](#2-クラスタの確認)
+  - [基盤コンポーネントのセットアップ](#基盤コンポーネントのセットアップ)
+    - [推奨デプロイ順序](#推奨デプロイ順序)
   - [コンポーネント一覧](#コンポーネント一覧)
     - [dashboard](#dashboard)
     - [traefik](#traefik)
     - [local storage](#local-storage)
     - [localstack](#localstack)
-    - [localstack](#localstack-1)
     - [jaeger](#jaeger)
     - [mysql-operator](#mysql-operator)
     - [temporal-db](#temporal-db)
@@ -63,6 +64,34 @@ kind create cluster --config kind.yaml --name local-cluster
 ```bash
 kubectl cluster-info
 kubectl get nodes
+```
+
+## 基盤コンポーネントのセットアップ
+
+クラスタを作成した後、他のコンポーネントをデプロイする前に、以下の基盤コンポーネントを**最初に**セットアップする必要があります：
+
+### 推奨デプロイ順序
+
+1. **Dashboard** - クラスタの監視と管理用UIを提供
+2. **Traefik (Ingress Controller)** - Ingressリソースを処理するために必要（LocalStack、Jaegerなどが依存）
+3. **Local Storage (local-path-provisioner)** - PersistentVolumeClaimを処理するために必要（LocalStackなどが依存）
+
+これらの基盤コンポーネントをセットアップした後、他のコンポーネント（LocalStack、Jaeger、MySQL Operatorなど）をデプロイできます。
+
+**セットアップコマンド**:
+
+```bash
+# 1. Dashboard
+kubectl apply -k dashboard
+
+# 2. Traefik (Ingress Controller)
+kubectl apply -k traefik
+
+# 3. Local Storage
+kubectl apply -k local-path-provisioner
+
+# すべてのPodが起動するまで待機
+kubectl get pods --all-namespaces
 ```
 
 ## コンポーネント一覧
@@ -155,39 +184,9 @@ kubectl apply -k local-path-provisioner
 
 AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
 
-**セットアップ方法**:
-
-```bash
-# Kustomizeを使用してリソースを適用
-kubectl apply -k localstack
-
-# 削除する場合
-# kubectl delete -k localstack
-```
-
-**主な構成**:
-
-- LocalStack StatefulSet設定（statefulset.yaml）- LocalStackイメージ（バージョン4.12.0）、永続ボリューム設定
-- サービス設定（service.yaml）- ポート4566でのアクセス
-- Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
-- PVC設定（pvc.yaml）- データ永続化用ストレージ
-- 名前空間設定（namespace.yaml）- localstack名前空間
-
-LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
-
-**アクセス方法**:
-
-```bash
-# Ingressを通じてLocalStackにアクセス
-# ブラウザまたはAWS CLIで以下のエンドポイントにアクセス
-# http://localhost.localstack.cloud/
-
-# AWS CLIの使用例
-AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
-```
-### localstack
-
-AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
+**前提条件**:
+- Traefikが事前にデプロイされていること（Ingressリソースを処理するため）
+- local-path-provisionerが事前にデプロイされていること（PVCを処理するため）
 
 **セットアップ方法**:
 
@@ -205,9 +204,20 @@ kubectl apply -k localstack
 - サービス設定（service.yaml）- ポート4566でのアクセス
 - Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
 - PVC設定（pvc.yaml）- データ永続化用ストレージ
+- ConfigMap設定（kustomization.yaml）- 環境変数（env-localstack）と初期化スクリプト（init-localstack）のConfigMap生成
 - 名前空間設定（namespace.yaml）- localstack名前空間
 
-LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+LocalStackは、S3、SQS、SNS、DynamoDBなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+
+**環境変数**:
+
+デフォルトで以下のサービスが有効化されています：
+- S3（オブジェクトストレージ）
+- SQS（メッセージキュー）
+- SNS（通知サービス）
+- DynamoDB（NoSQLデータベース）
+
+デフォルトリージョンは `ap-northeast-1` に設定されています。
 
 **アクセス方法**:
 
@@ -218,11 +228,33 @@ LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカ
 
 # AWS CLIの使用例
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
+
+# 特定のサービスを使用する例
+# S3バケットの作成
+aws --endpoint-url=http://localhost.localstack.cloud s3 mb s3://my-bucket --region ap-northeast-1
+
+# SQSキューの作成
+aws --endpoint-url=http://localhost.localstack.cloud sqs create-queue --queue-name my-queue --region ap-northeast-1
+
+# DynamoDBテーブルの作成
+aws --endpoint-url=http://localhost.localstack.cloud dynamodb create-table \
+  --table-name my-table \
+  --attribute-definitions AttributeName=id,AttributeType=S \
+  --key-schema AttributeName=id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region ap-northeast-1
 ```
+
+**初期化スクリプト**:
+
+初期化スクリプトは `/etc/localstack/init/ready.d` にマウントされます。カスタム初期化処理が必要な場合は、`localstack/base/files/init-scripts.sh` を編集してください。
 
 ### jaeger
 
 分散トレーシングシステムであるJaegerのデプロイメント設定が含まれています。
+
+**前提条件**:
+- Traefikが事前にデプロイされていること（IngressリソースでUI及びOTLPエンドポイントを公開するため）
 
 **セットアップ方法**:
 

@@ -12,6 +12,8 @@ This repository contains setup configurations for a local Kubernetes cluster usi
   - [Kind Cluster Setup](#kind-cluster-setup)
     - [1. Creating the Cluster](#1-creating-the-cluster)
     - [2. Verifying the Cluster](#2-verifying-the-cluster)
+  - [Base Infrastructure Setup](#base-infrastructure-setup)
+    - [Recommended Deployment Order](#recommended-deployment-order)
   - [Components](#components)
     - [Dashboard](#dashboard)
     - [Traefik](#traefik)
@@ -62,6 +64,34 @@ Verify that the cluster has been created successfully:
 ```bash
 kubectl cluster-info
 kubectl get nodes
+```
+
+## Base Infrastructure Setup
+
+After creating the cluster, you need to set up the following base infrastructure components **first** before deploying other components:
+
+### Recommended Deployment Order
+
+1. **Dashboard** - Provides UI for cluster monitoring and management
+2. **Traefik (Ingress Controller)** - Required to handle Ingress resources (LocalStack, Jaeger, etc. depend on this)
+3. **Local Storage (local-path-provisioner)** - Required to handle PersistentVolumeClaims (LocalStack, etc. depend on this)
+
+After setting up these base infrastructure components, you can deploy other components (LocalStack, Jaeger, MySQL Operator, etc.).
+
+**Setup Commands**:
+
+```bash
+# 1. Dashboard
+kubectl kustomize --enable-helm dashboard/ | kubectl apply -f -
+
+# 2. Traefik (Ingress Controller)
+kubectl kustomize --enable-helm traefik/ | kubectl apply -f -
+
+# 3. Local Storage
+kubectl apply -k local-path-provisioner
+
+# Wait for all pods to start
+kubectl get pods --all-namespaces
 ```
 
 ## Components
@@ -155,6 +185,10 @@ kubectl apply -k local-path-provisioner
 
 Configuration files for deploying LocalStack, a local emulator for AWS services.
 
+**Prerequisites**:
+- Traefik must be deployed beforehand (to handle Ingress resources)
+- local-path-provisioner must be deployed beforehand (to handle PVC)
+
 **Setup Method**:
 
 ```bash
@@ -171,9 +205,20 @@ kubectl apply -k localstack
 - Service configuration (service.yaml) - access via port 4566
 - Ingress configuration (ingress.yaml) - access via localhost.localstack.cloud hostname
 - PVC configuration (pvc.yaml) - storage for data persistence
+- ConfigMap configuration (kustomization.yaml) - ConfigMap generation for environment variables (env-localstack) and initialization scripts (init-localstack)
 - Namespace configuration (namespace.yaml) - localstack namespace
 
-LocalStack emulates AWS services such as S3, DynamoDB, Lambda, and SQS in a local environment for development and testing purposes.
+LocalStack emulates AWS services such as S3, SQS, SNS, and DynamoDB in a local environment for development and testing purposes.
+
+**Environment Variables**:
+
+The following services are enabled by default:
+- S3 (Object Storage)
+- SQS (Message Queue)
+- SNS (Notification Service)
+- DynamoDB (NoSQL Database)
+
+The default region is set to `ap-northeast-1`.
 
 **Access Method**:
 
@@ -184,11 +229,33 @@ LocalStack emulates AWS services such as S3, DynamoDB, Lambda, and SQS in a loca
 
 # AWS CLI usage example
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
+
+# Examples of using specific services
+# Create an S3 bucket
+aws --endpoint-url=http://localhost.localstack.cloud s3 mb s3://my-bucket --region ap-northeast-1
+
+# Create an SQS queue
+aws --endpoint-url=http://localhost.localstack.cloud sqs create-queue --queue-name my-queue --region ap-northeast-1
+
+# Create a DynamoDB table
+aws --endpoint-url=http://localhost.localstack.cloud dynamodb create-table \
+  --table-name my-table \
+  --attribute-definitions AttributeName=id,AttributeType=S \
+  --key-schema AttributeName=id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region ap-northeast-1
 ```
+
+**Initialization Scripts**:
+
+Initialization scripts are mounted at `/etc/localstack/init/ready.d`. If you need custom initialization processes, edit `localstack/base/files/init-scripts.sh`.
 
 ### Jaeger
 
 Configuration files for deploying Jaeger, a distributed tracing system.
+
+**Prerequisites**:
+- Traefik must be deployed beforehand (to expose UI and OTLP endpoints via Ingress resources)
 
 **Setup Method**:
 
