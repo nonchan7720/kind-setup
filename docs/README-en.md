@@ -171,9 +171,20 @@ kubectl apply -k localstack
 - Service configuration (service.yaml) - access via port 4566
 - Ingress configuration (ingress.yaml) - access via localhost.localstack.cloud hostname
 - PVC configuration (pvc.yaml) - storage for data persistence
+- ConfigMap configuration (configuration.yaml) - environment variables and initialization scripts
 - Namespace configuration (namespace.yaml) - localstack namespace
 
-LocalStack emulates AWS services such as S3, DynamoDB, Lambda, and SQS in a local environment for development and testing purposes.
+LocalStack emulates AWS services such as S3, SQS, SNS, and DynamoDB in a local environment for development and testing purposes.
+
+**Environment Variables**:
+
+The following services are enabled by default:
+- S3 (Object Storage)
+- SQS (Message Queue)
+- SNS (Notification Service)
+- DynamoDB (NoSQL Database)
+
+The default region is set to `ap-northeast-1`.
 
 **Access Method**:
 
@@ -184,7 +195,26 @@ LocalStack emulates AWS services such as S3, DynamoDB, Lambda, and SQS in a loca
 
 # AWS CLI usage example
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
+
+# Examples of using specific services
+# Create an S3 bucket
+aws --endpoint-url=http://localhost.localstack.cloud s3 mb s3://my-bucket --region ap-northeast-1
+
+# Create an SQS queue
+aws --endpoint-url=http://localhost.localstack.cloud sqs create-queue --queue-name my-queue --region ap-northeast-1
+
+# Create a DynamoDB table
+aws --endpoint-url=http://localhost.localstack.cloud dynamodb create-table \
+  --table-name my-table \
+  --attribute-definitions AttributeName=id,AttributeType=S \
+  --key-schema AttributeName=id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region ap-northeast-1
 ```
+
+**Initialization Scripts**:
+
+Initialization scripts are mounted at `/etc/localstack/init/ready.d`. If you need custom initialization processes, edit `localstack/base/files/init-scripts.sh`.
 
 ### Jaeger
 

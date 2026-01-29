@@ -17,7 +17,6 @@
     - [traefik](#traefik)
     - [local storage](#local-storage)
     - [localstack](#localstack)
-    - [localstack](#localstack-1)
     - [jaeger](#jaeger)
     - [mysql-operator](#mysql-operator)
     - [temporal-db](#temporal-db)
@@ -171,9 +170,20 @@ kubectl apply -k localstack
 - サービス設定（service.yaml）- ポート4566でのアクセス
 - Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
 - PVC設定（pvc.yaml）- データ永続化用ストレージ
+- ConfigMap設定（configuration.yaml）- 環境変数と初期化スクリプト
 - 名前空間設定（namespace.yaml）- localstack名前空間
 
-LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+LocalStackは、S3、SQS、SNS、DynamoDBなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
+
+**環境変数**:
+
+デフォルトで以下のサービスが有効化されています：
+- S3（オブジェクトストレージ）
+- SQS（メッセージキュー）
+- SNS（通知サービス）
+- DynamoDB（NoSQLデータベース）
+
+デフォルトリージョンは `ap-northeast-1` に設定されています。
 
 **アクセス方法**:
 
@@ -184,41 +194,26 @@ LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカ
 
 # AWS CLIの使用例
 AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
+
+# 特定のサービスを使用する例
+# S3バケットの作成
+aws --endpoint-url=http://localhost.localstack.cloud s3 mb s3://my-bucket --region ap-northeast-1
+
+# SQSキューの作成
+aws --endpoint-url=http://localhost.localstack.cloud sqs create-queue --queue-name my-queue --region ap-northeast-1
+
+# DynamoDBテーブルの作成
+aws --endpoint-url=http://localhost.localstack.cloud dynamodb create-table \
+  --table-name my-table \
+  --attribute-definitions AttributeName=id,AttributeType=S \
+  --key-schema AttributeName=id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region ap-northeast-1
 ```
-### localstack
 
-AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
+**初期化スクリプト**:
 
-**セットアップ方法**:
-
-```bash
-# Kustomizeを使用してリソースを適用
-kubectl apply -k localstack
-
-# 削除する場合
-# kubectl delete -k localstack
-```
-
-**主な構成**:
-
-- LocalStack StatefulSet設定（statefulset.yaml）- LocalStackイメージ（バージョン4.12.0）、永続ボリューム設定
-- サービス設定（service.yaml）- ポート4566でのアクセス
-- Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
-- PVC設定（pvc.yaml）- データ永続化用ストレージ
-- 名前空間設定（namespace.yaml）- localstack名前空間
-
-LocalStackは、S3、DynamoDB、Lambda、SQSなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。
-
-**アクセス方法**:
-
-```bash
-# Ingressを通じてLocalStackにアクセス
-# ブラウザまたはAWS CLIで以下のエンドポイントにアクセス
-# http://localhost.localstack.cloud/
-
-# AWS CLIの使用例
-AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost.localstack.cloud s3 ls
-```
+初期化スクリプトは `/etc/localstack/init/ready.d` にマウントされます。カスタム初期化処理が必要な場合は、`localstack/base/files/init-scripts.sh` を編集してください。
 
 ### jaeger
 
