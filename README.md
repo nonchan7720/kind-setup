@@ -12,6 +12,8 @@
   - [Kindクラスタのセットアップ](#kindクラスタのセットアップ)
     - [1. クラスタの作成](#1-クラスタの作成)
     - [2. クラスタの確認](#2-クラスタの確認)
+  - [基盤コンポーネントのセットアップ](#基盤コンポーネントのセットアップ)
+    - [推奨デプロイ順序](#推奨デプロイ順序)
   - [コンポーネント一覧](#コンポーネント一覧)
     - [dashboard](#dashboard)
     - [traefik](#traefik)
@@ -62,6 +64,34 @@ kind create cluster --config kind.yaml --name local-cluster
 ```bash
 kubectl cluster-info
 kubectl get nodes
+```
+
+## 基盤コンポーネントのセットアップ
+
+クラスタを作成した後、他のコンポーネントをデプロイする前に、以下の基盤コンポーネントを**最初に**セットアップする必要があります：
+
+### 推奨デプロイ順序
+
+1. **Dashboard** - クラスタの監視と管理用UIを提供
+2. **Traefik (Ingress Controller)** - Ingressリソースを処理するために必要（LocalStack、Jaegerなどが依存）
+3. **Local Storage (local-path-provisioner)** - PersistentVolumeClaimを処理するために必要（LocalStackなどが依存）
+
+これらの基盤コンポーネントをセットアップした後、他のコンポーネント（LocalStack、Jaeger、MySQL Operatorなど）をデプロイできます。
+
+**セットアップコマンド**:
+
+```bash
+# 1. Dashboard
+kubectl apply -k dashboard
+
+# 2. Traefik (Ingress Controller)
+kubectl apply -k traefik
+
+# 3. Local Storage
+kubectl apply -k local-path-provisioner
+
+# すべてのPodが起動するまで待機
+kubectl get pods --all-namespaces
 ```
 
 ## コンポーネント一覧
@@ -154,6 +184,10 @@ kubectl apply -k local-path-provisioner
 
 AWSサービスのローカルエミュレーターであるLocalStackのデプロイメント設定が含まれています。
 
+**前提条件**:
+- Traefikが事前にデプロイされていること（Ingressリソースを処理するため）
+- local-path-provisionerが事前にデプロイされていること（PVCを処理するため）
+
 **セットアップ方法**:
 
 ```bash
@@ -218,6 +252,9 @@ aws --endpoint-url=http://localhost.localstack.cloud dynamodb create-table \
 ### jaeger
 
 分散トレーシングシステムであるJaegerのデプロイメント設定が含まれています。
+
+**前提条件**:
+- Traefikが事前にデプロイされていること（IngressリソースでUI及びOTLPエンドポイントを公開するため）
 
 **セットアップ方法**:
 

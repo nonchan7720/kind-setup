@@ -12,6 +12,8 @@ This repository contains setup configurations for a local Kubernetes cluster usi
   - [Kind Cluster Setup](#kind-cluster-setup)
     - [1. Creating the Cluster](#1-creating-the-cluster)
     - [2. Verifying the Cluster](#2-verifying-the-cluster)
+  - [Base Infrastructure Setup](#base-infrastructure-setup)
+    - [Recommended Deployment Order](#recommended-deployment-order)
   - [Components](#components)
     - [Dashboard](#dashboard)
     - [Traefik](#traefik)
@@ -62,6 +64,34 @@ Verify that the cluster has been created successfully:
 ```bash
 kubectl cluster-info
 kubectl get nodes
+```
+
+## Base Infrastructure Setup
+
+After creating the cluster, you need to set up the following base infrastructure components **first** before deploying other components:
+
+### Recommended Deployment Order
+
+1. **Dashboard** - Provides UI for cluster monitoring and management
+2. **Traefik (Ingress Controller)** - Required to handle Ingress resources (LocalStack, Jaeger, etc. depend on this)
+3. **Local Storage (local-path-provisioner)** - Required to handle PersistentVolumeClaims (LocalStack, etc. depend on this)
+
+After setting up these base infrastructure components, you can deploy other components (LocalStack, Jaeger, MySQL Operator, etc.).
+
+**Setup Commands**:
+
+```bash
+# 1. Dashboard
+kubectl kustomize --enable-helm dashboard/ | kubectl apply -f -
+
+# 2. Traefik (Ingress Controller)
+kubectl kustomize --enable-helm traefik/ | kubectl apply -f -
+
+# 3. Local Storage
+kubectl apply -k local-path-provisioner
+
+# Wait for all pods to start
+kubectl get pods --all-namespaces
 ```
 
 ## Components
@@ -155,6 +185,10 @@ kubectl apply -k local-path-provisioner
 
 Configuration files for deploying LocalStack, a local emulator for AWS services.
 
+**Prerequisites**:
+- Traefik must be deployed beforehand (to handle Ingress resources)
+- local-path-provisioner must be deployed beforehand (to handle PVC)
+
 **Setup Method**:
 
 ```bash
@@ -219,6 +253,9 @@ Initialization scripts are mounted at `/etc/localstack/init/ready.d`. If you nee
 ### Jaeger
 
 Configuration files for deploying Jaeger, a distributed tracing system.
+
+**Prerequisites**:
+- Traefik must be deployed beforehand (to expose UI and OTLP endpoints via Ingress resources)
 
 **Setup Method**:
 
