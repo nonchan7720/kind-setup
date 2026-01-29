@@ -170,7 +170,7 @@ kubectl apply -k localstack
 - サービス設定（service.yaml）- ポート4566でのアクセス
 - Ingress設定（ingress.yaml）- localhost.localstack.cloudホスト名でのアクセス
 - PVC設定（pvc.yaml）- データ永続化用ストレージ
-- ConfigMap設定（configuration.yaml）- 環境変数と初期化スクリプト
+- ConfigMap設定（kustomization.yaml）- 環境変数（env-localstack）と初期化スクリプト（init-localstack）のConfigMap生成
 - 名前空間設定（namespace.yaml）- localstack名前空間
 
 LocalStackは、S3、SQS、SNS、DynamoDBなどのAWSサービスをローカル環境でエミュレートし、開発・テスト用途に使用できます。

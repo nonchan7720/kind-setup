@@ -171,7 +171,7 @@ kubectl apply -k localstack
 - Service configuration (service.yaml) - access via port 4566
 - Ingress configuration (ingress.yaml) - access via localhost.localstack.cloud hostname
 - PVC configuration (pvc.yaml) - storage for data persistence
-- ConfigMap configuration (configuration.yaml) - environment variables and initialization scripts
+- ConfigMap configuration (kustomization.yaml) - ConfigMap generation for environment variables (env-localstack) and initialization scripts (init-localstack)
 - Namespace configuration (namespace.yaml) - localstack namespace
 
 LocalStack emulates AWS services such as S3, SQS, SNS, and DynamoDB in a local environment for development and testing purposes.
